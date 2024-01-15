@@ -1,0 +1,31 @@
+package ivan.k.services.listener;
+
+import io.micronaut.configuration.kafka.annotation.KafkaListener;
+import io.micronaut.configuration.kafka.annotation.Topic;
+import io.micronaut.messaging.annotation.MessageBody;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import ivan.k.services.integration.Trip;
+import ivan.k.services.service.DriverService;
+
+@KafkaListener(groupId = "driver")
+public class TripListener {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TripListener.class);
+
+    private DriverService service;
+
+    public TripListener(DriverService service) {
+        this.service = service;
+    }
+
+    @Topic("trips")
+    public void receive(@MessageBody Trip trip) {
+        LOGGER.info("Received: {}", trip);
+        switch (trip.getStatus()) {
+            case FINISHED -> service.processTripFinished(trip);
+            case REJECTED -> service.processTripRejected(trip);
+        }
+    }
+
+}
